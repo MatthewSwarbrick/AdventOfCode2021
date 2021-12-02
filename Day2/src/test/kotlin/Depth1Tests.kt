@@ -1,14 +1,14 @@
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
-class DepthTests {
+class Depth1Tests {
     @Test
     fun `Forward commands are ignored`() {
         val input = listOf(
             "forward 5"
         )
 
-        val actual = input.getDepth()
+        val actual = input.getDepth1()
         assertEquals(expected = 0, actual)
     }
 
@@ -20,7 +20,7 @@ class DepthTests {
             "forward 2"
         )
 
-        val actual = input.getDepth()
+        val actual = input.getDepth1()
         assertEquals(expected = 0, actual)
     }
 
@@ -30,7 +30,7 @@ class DepthTests {
             "down 5"
         )
 
-        val actual = input.getDepth()
+        val actual = input.getDepth1()
         assertEquals(expected = 5, actual)
     }
 
@@ -40,7 +40,7 @@ class DepthTests {
             "up 5"
         )
 
-        val actual = input.getDepth()
+        val actual = input.getDepth1()
         assertEquals(expected = -5, actual)
     }
 
@@ -52,7 +52,7 @@ class DepthTests {
             "down 2"
         )
 
-        val actual = input.getDepth()
+        val actual = input.getDepth1()
         assertEquals(expected = -8, actual)
     }
 }
