@@ -1,4 +1,4 @@
-val puzzle1: Array<Int> = arrayOf(
+val puzzle: Array<Int> = arrayOf(
     170,
     176,
     179,
