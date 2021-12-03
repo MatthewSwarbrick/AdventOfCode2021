@@ -21,19 +21,41 @@ private fun solvePart1() {
 }
 
 private fun solvePart2() {
-//    val input = listOf(
-//        "00100",
-//        "11110",
-//        "10110",
-//        "10111",
-//        "10101",
-//        "01111",
-//        "00111",
-//        "11100",
-//        "10000",
-//        "11001",
-//        "00010",
-//        "01010"
-//    )
-    println("Solution to part2:")
+    val oxygen = getOxygen(puzzle, 0)[0].toLong(2)
+    val co2 = getCo2(puzzle, 0)[0].toLong(2)
+    val answer = oxygen * co2
+
+    println("Solution to part2: $answer")
+}
+
+private fun getOxygen(numbers: List<String>, bitIndex: Int) : List<String> {
+    if(numbers.count() == 1) {
+        return numbers
+    }
+
+    val groups = numbers.map { it[bitIndex] }.groupBy { it }
+    val totalOnes = groups['1']?.count() ?: 0
+    val totalZeros = groups['0']?.count() ?: 0
+
+    return when {
+        totalOnes > totalZeros -> getOxygen(numbers.filter { it[bitIndex] == '1' }, bitIndex + 1)
+        totalOnes < totalZeros -> getOxygen(numbers.filter { it[bitIndex] == '0' }, bitIndex + 1)
+        else -> getOxygen(numbers.filter { it[bitIndex] == '1' }, bitIndex + 1)
+    }
+}
+
+private fun getCo2(numbers: List<String>, bitIndex: Int) : List<String> {
+    if(numbers.count() == 1) {
+        return numbers
+    }
+
+    val groups = numbers.map { it[bitIndex] }.groupBy { it }
+    val totalOnes = groups['1']?.count() ?: 0
+    val totalZeros = groups['0']?.count() ?: 0
+
+    return when {
+        totalOnes < totalZeros -> getCo2(numbers.filter { it[bitIndex] == '1' }, bitIndex + 1)
+        totalOnes > totalZeros -> getCo2(numbers.filter { it[bitIndex] == '0' }, bitIndex + 1)
+        else -> getCo2(numbers.filter { it[bitIndex] == '0' }, bitIndex + 1)
+    }
 }
