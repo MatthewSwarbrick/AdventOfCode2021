@@ -21,10 +21,18 @@ private fun solvePart1() {
 }
 
 private fun solvePart2() {
-    val input = listOf(
-        16,1,2,0,4,2,7,1,2,14
-    )
-    val answer = 0
+    val lowestPosition = puzzle.minOrNull()!!
+    val highestPosition = puzzle.maxOrNull()!!
+
+
+    val costs = (lowestPosition until highestPosition + 1).associateWith { position ->
+        puzzle.sumOf {
+            val distance = abs(it - position)
+            distance * ((distance / 2f) + 0.5)
+        }
+    }
+
+    val answer = costs.minByOrNull { it.value }!!.value
 
     println("Solution to part2: $answer")
 }
