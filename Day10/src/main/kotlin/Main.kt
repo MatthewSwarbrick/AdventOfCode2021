@@ -21,29 +21,30 @@ private fun solvePart1() {
 }
 
 private fun solvePart2() {
-    val input = listOf(
-        "[({(<(())[]>[[{[]{<()<>>",
-        "[(()[<>])]({[<{<<[]>>(",
-        "{([(<{}[<>[]}>{[]{[(<()>",
-        "(((({<>}<{<{<>}{[]{[]{}",
-        "[[<[([]))<([[{}[[()]]]",
-        "[{[{({}]{}}([{[{{{}}([]",
-        "{<[[]]>}<{[{[{[]{()[[[]",
-        "[<(<(<(<{}))><([]([]()",
-        "<{([([[(<>()){}]>(<<{{",
-        "<{([{{}}[<[[[<>{}]]]>[]]"
-    )
-    
-    val answer = 0
+    val answer = puzzle
+        .toLineFixes()
+        .toScores()
+        .sorted()
+        .toMiddleScore()
+
     println("Solution to part2: $answer")
 }
 
 private fun List<String>.toFirstIllegalCharacters(): List<Char> =
-    this.mapNotNull { line -> line.toFirstIllegalCharacter() }
+    this.mapNotNull{  line -> line.toOpenChunks().second }
 
-private fun String.toFirstIllegalCharacter(): Char? {
+private fun List<String>.toLineFixes(): List<List<Char>> =
+    this.asSequence().map { line -> line.toOpenChunks() }
+        .filter { it.second == null }
+        .map { it.first }
+        .map { it.map { c ->
+            c.toClosingCharacter()
+        }}
+        .map { it.reversed() }.toList()
+
+private fun String.toOpenChunks(): Pair<List<Char>, Char?> {
     var openingChars = listOf(this[0])
-    return this.drop(1).mapNotNull { c ->
+    val firstIllegalCharacter = this.drop(1).mapNotNull { c ->
         if (c.isClosingChar()) {
             when (c) {
                 closeRound -> if (openingChars.last() == openRound) {
@@ -77,6 +78,8 @@ private fun String.toFirstIllegalCharacter(): Char? {
             null
         }
     }.firstOrNull()
+
+    return openingChars to firstIllegalCharacter
 }
 
 private fun Char.isClosingChar() =
@@ -92,3 +95,31 @@ private fun List<Char>.toErrorScore() =
             else -> 0L
         }
     }
+
+private fun List<List<Char>>.toScores() = this.map { it.toScore() }
+
+private fun List<Char>.toScore() =
+    this.fold(0L) { totalScore, c ->
+        (totalScore * 5) + c.toScore()
+    }
+
+private fun Char.toClosingCharacter() =
+    when(this) {
+        openSquare -> closeSquare
+        openAngle -> closeAngle
+        openRound -> closeRound
+        openCurly -> closeCurly
+        else -> this
+    }
+
+private fun Char.toScore() =
+    when(this) {
+        closeRound -> 1
+        closeSquare -> 2
+        closeCurly -> 3
+        closeAngle -> 4
+        else -> 0
+    }
+
+private fun List<Long>.toMiddleScore() =
+    this[this.size / 2]
