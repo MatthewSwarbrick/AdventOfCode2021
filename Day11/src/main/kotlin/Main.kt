@@ -13,20 +13,10 @@ private fun solvePart1() {
 }
 
 private fun solvePart2() {
-    val input = listOf(
-        "5483143223",
-        "2745854711",
-        "5264556173",
-        "6141336146",
-        "6357385478",
-        "4167524645",
-        "2176841721",
-        "6882881134",
-        "4846848554",
-        "5283751526"
-    )
+    val answer = puzzle
+        .toOctopuses()
+        .toSynchronisedStep()
 
-    val answer = 0
     println("Solution to part2: $answer")
 }
 
@@ -43,6 +33,18 @@ private fun List<Octopus>.toSteps(steps: Int = 100) : Pair<List<Octopus>, Int> =
         val (octopusesAfterStep, flashesAfterStep) = octopuses.step()
         octopusesAfterStep to flashesAfterStep + flashes
     }
+
+private fun List<Octopus>.toSynchronisedStep(): Int {
+    (1..Int.MAX_VALUE).foldIndexed(this to 0) { step, acc, _ ->
+        val (octopuses, flashes) = acc
+        val (octopusesAfterStep, flashesAfterStep) = octopuses.step()
+        if(flashesAfterStep == this.size) {
+            return step + 1
+        }
+        octopusesAfterStep to flashesAfterStep + flashes
+    }
+    return -1
+}
 
 private fun List<Octopus>.step(): Pair<List<Octopus>, Int> {
     var octopuses = this
