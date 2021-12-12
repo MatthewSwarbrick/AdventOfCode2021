@@ -13,17 +13,11 @@ private fun solvePart1() {
 }
 
 private fun solvePart2() {
-    val input = listOf(
-        "start-A",
-        "start-b",
-        "A-c",
-        "A-b",
-        "b-d",
-        "A-end",
-        "b-end"
-    )
+    val answer = puzzle
+        .toCaves()
+        .toPaths(allowSmallCaveTwoVisits = true)
+        .count()
 
-    val answer = 0
     println("Solution to part2: $answer")
 }
 
@@ -47,20 +41,25 @@ private fun List<String>.toCaves() : Map<Cave, Set<Cave>> {
     return caveMap
 }
 
-private fun Map<Cave, Set<Cave>>.toPaths(): List<List<Cave>> {
+private fun Map<Cave, Set<Cave>>.toPaths(allowSmallCaveTwoVisits: Boolean = false): List<List<Cave>> {
     val startCave = this.keys.first { it.name == "start" }
     val currentPath = listOf(startCave)
-    return startCave.toPaths(currentPath, this)
+    return startCave.toPaths(currentPath, this, allowSmallCaveTwoVisits)
 }
 
-private fun Cave.toPaths(currentPath: List<Cave>, caves: Map<Cave, Set<Cave>>) : List<List<Cave>> =
+private fun Cave.toPaths(currentPath: List<Cave>, caves: Map<Cave, Set<Cave>>, allowSmallCaveTwoVisits: Boolean = false) : List<List<Cave>> =
     caves[this]?.mapNotNull { cave ->
         if(currentPath.contains(cave) && !cave.canVisitMultiple) {
-            null
+            val alreadyVisitedSmallCaveTwice = currentPath.filter{ !it.canVisitMultiple }.groupingBy { it }.eachCount().any { it.value > 1}
+            if(!allowSmallCaveTwoVisits || cave.name == "start" || alreadyVisitedSmallCaveTwice) {
+                null
+            } else {
+                cave.toPaths(currentPath.plus(cave), caves, allowSmallCaveTwoVisits)
+            }
         } else if(cave.name == "end") {
             listOf(currentPath.plus(cave))
         } else {
-            cave.toPaths(currentPath.plus(cave), caves)
+            cave.toPaths(currentPath.plus(cave), caves, allowSmallCaveTwoVisits)
         }
     }?.flatten() ?: listOf(currentPath)
 
