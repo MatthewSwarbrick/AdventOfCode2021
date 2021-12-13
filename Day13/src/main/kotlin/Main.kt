@@ -15,30 +15,14 @@ private fun solvePart1() {
 }
 
 private fun solvePart2() {
-    val input = listOf(
-        "6,10",
-        "0,14",
-        "9,10",
-        "0,3",
-        "10,4",
-        "4,11",
-        "6,0",
-        "6,12",
-        "4,1",
-        "0,13",
-        "10,12",
-        "3,4",
-        "3,0",
-        "8,4",
-        "1,10",
-        "2,14",
-        "8,10",
-        "9,0",
-        "",
-        "fold along y=7",
-        "fold along x=5"
-    )
-    val answer = 0
+    val answer = puzzle
+        .toInstructions()
+        .fold()
+        .last()
+        .distinct()
+        .print()
+        .count()
+
     println("Solution to part2: $answer")
 }
 
@@ -98,7 +82,7 @@ private fun List<Point>.foldY(value: Int): List<Point> =
         }
     }
 
-private fun List<Point>.print() {
+private fun List<Point>.print(): List<Point> {
     println()
     val maxX = this.maxOf { it.x }
     val maxY = this.maxOf { it.y }
@@ -106,14 +90,15 @@ private fun List<Point>.print() {
         for(x in 0..maxX) {
             val point = this.find { it.x == x && it.y == y }
             if(point == null) {
-                print("O")
+                print(" ")
             } else {
-                print("X")
+                print("#")
             }
         }
         println()
     }
     println()
+    return this
 }
 
 data class Point(val x: Int, val y: Int, val isDot: Boolean)
