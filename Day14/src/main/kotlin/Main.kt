@@ -7,7 +7,6 @@ private fun solvePart1() {
     val answer = puzzle
         .toRules()
         .toPolymer()
-        .toLetterGroups()
         .toAnswer()
 
     println("Solution to part1: $answer")
@@ -35,7 +34,11 @@ private fun solvePart2() {
         "CN -> C"
     )
 
-    val answer = 0
+    val answer = input
+        .toRules()
+        .toPolymer(steps = 40)
+        .toAnswer()
+
     println("Solution to part2: $answer")
 }
 
@@ -50,14 +53,48 @@ private fun List<String>.toRules(): Pair<String, Map<String, String>> {
     return template to rules
 }
 
-private fun Pair<String, Map<String, String>>.toPolymer(steps: Int = 10): String {
+private fun Pair<String, Map<String, String>>.toPolymer(steps: Int = 10): Map<Char, Long> {
     val (template, rules) = this
-
     var polymer = template
-    (1..steps).map {
-        polymer = polymer.toPolymer(rules)
+
+    val letterCounts = mutableMapOf<Char, Long>()
+
+    val remainingSteps = polymer.mapIndexed { index, _ -> index to steps}.toMap().toMutableMap()
+
+    do {
+
+        val maxPolymerSize = 2_048_000
+        val polymerSize = polymer.length.coerceAtMost(maxPolymerSize)
+        if(polymer.length <= 1) {
+            val lastLetter = polymer[0]
+            val existingCount = letterCounts[lastLetter] ?: 0
+            letterCounts[lastLetter] = existingCount + 1
+            break
+        }
+
+        val lastIndex = polymer.lastIndex
+        val remainingStepsForLastIndex = remainingSteps[lastIndex]!!
+
+        if(remainingStepsForLastIndex <= 0) {
+            val lastLetter = polymer[lastIndex]
+            val existingCount = letterCounts[lastLetter] ?: 0
+            letterCounts[lastLetter] = existingCount + 1
+            polymer = polymer.substring(0, lastIndex)
+            continue
+        }
+
+        val existingPolymer = polymer.substring(0, polymer.length - polymerSize)
+        val endPair = polymer.substring(polymer.length - polymerSize, polymer.length)
+        val newEnd = endPair.toPolymer(rules)
+        polymer = "$existingPolymer$newEnd"
+
+        (existingPolymer.length + 1 .. polymer.length).map { index ->
+            remainingSteps[index] = remainingStepsForLastIndex - 1
+        }
     }
-    return polymer
+    while (remainingSteps.values.any { it > 0 })
+
+    return letterCounts
 }
 
 private fun String.toPolymer(rules: Map<String, String>): String {
@@ -72,15 +109,12 @@ private fun String.toPolymer(rules: Map<String, String>): String {
     }.joinToString("")
 }
 
-private fun String.toLetterGroups(): Map<Char, Int> =
-    this.groupingBy { it }.eachCount()
-
 private fun String.toParts(): List<String> =
     (0 until this.length - 1).map {
         this.substring(it, it + 2)
     }
 
-private fun Map<Char, Int>.toAnswer(): Int {
+private fun Map<Char, Long>.toAnswer(): Long {
     val most =  this.maxByOrNull { it.value }?.value ?: 0
     val least = this.minByOrNull { it.value }?.value ?: 0
     return most - least
