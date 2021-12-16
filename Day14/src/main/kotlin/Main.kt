@@ -13,28 +13,7 @@ private fun solvePart1() {
 }
 
 private fun solvePart2() {
-    val input = listOf(
-        "NNCB",
-        "",
-        "CH -> B",
-        "HH -> N",
-        "CB -> H",
-        "NH -> C",
-        "HB -> C",
-        "HC -> B",
-        "HN -> C",
-        "NN -> C",
-        "BH -> H",
-        "NC -> B",
-        "NB -> B",
-        "BN -> B",
-        "BB -> N",
-        "BC -> B",
-        "CC -> N",
-        "CN -> C"
-    )
-
-    val answer = input
+    val answer = puzzle
         .toRules()
         .toPolymer(steps = 40)
         .toAnswer()
@@ -53,46 +32,35 @@ private fun List<String>.toRules(): Pair<String, Map<String, String>> {
     return template to rules
 }
 
-private fun Pair<String, Map<String, String>>.toPolymer(steps: Int = 10): Map<Char, Long> {
+private fun Pair<String, Map<String, String>>.toPolymer(steps: Int = 10): Map<String, Long> {
     val (template, rules) = this
-    var polymer = template
+    var pairs = mutableMapOf(
+        *template.toParts().groupBy { it }.map { it.key to it.value.count().toLong() }.toTypedArray()
+    )
 
-    val letterCounts = mutableMapOf<Char, Long>()
+    val letterCounts =
+        mutableMapOf(*template.groupBy { it }.map { "${it.key}" to it.value.count().toLong() }.toTypedArray())
 
-    val remainingSteps = polymer.mapIndexed { index, _ -> index to steps}.toMap().toMutableMap()
-
-    do {
-
-        val maxPolymerSize = 2_048_000
-        val polymerSize = polymer.length.coerceAtMost(maxPolymerSize)
-        if(polymer.length <= 1) {
-            val lastLetter = polymer[0]
-            val existingCount = letterCounts[lastLetter] ?: 0
-            letterCounts[lastLetter] = existingCount + 1
-            break
+    (1..steps).forEach { _ ->
+        val newPairs = mutableMapOf<String, Long>()
+        pairs.forEach { (pair, occurrences) ->
+            val newLetter = rules[pair]!!
+            if (letterCounts.containsKey(newLetter)) {
+                letterCounts[newLetter] = (letterCounts[newLetter] ?: 0) + occurrences
+            } else {
+                letterCounts[newLetter] = occurrences
+            }
+            val parts = pair.toPolymer(rules).toParts()
+            parts.forEach {
+                if (newPairs.containsKey(it)) {
+                    newPairs[it] = (newPairs[it] ?: 0) + occurrences
+                } else {
+                    newPairs[it] = occurrences
+                }
+            }
         }
-
-        val lastIndex = polymer.lastIndex
-        val remainingStepsForLastIndex = remainingSteps[lastIndex]!!
-
-        if(remainingStepsForLastIndex <= 0) {
-            val lastLetter = polymer[lastIndex]
-            val existingCount = letterCounts[lastLetter] ?: 0
-            letterCounts[lastLetter] = existingCount + 1
-            polymer = polymer.substring(0, lastIndex)
-            continue
-        }
-
-        val existingPolymer = polymer.substring(0, polymer.length - polymerSize)
-        val endPair = polymer.substring(polymer.length - polymerSize, polymer.length)
-        val newEnd = endPair.toPolymer(rules)
-        polymer = "$existingPolymer$newEnd"
-
-        (existingPolymer.length + 1 .. polymer.length).map { index ->
-            remainingSteps[index] = remainingStepsForLastIndex - 1
-        }
+        pairs = newPairs
     }
-    while (remainingSteps.values.any { it > 0 })
 
     return letterCounts
 }
@@ -101,7 +69,7 @@ private fun String.toPolymer(rules: Map<String, String>): String {
     val templateParts = this.toParts()
     return templateParts.mapIndexed { index, part ->
         val newLetter = rules[part]
-        if(index < templateParts.lastIndex) {
+        if (index < templateParts.lastIndex) {
             "${part[0]}$newLetter"
         } else {
             "${part[0]}$newLetter${part[1]}"
@@ -114,8 +82,8 @@ private fun String.toParts(): List<String> =
         this.substring(it, it + 2)
     }
 
-private fun Map<Char, Long>.toAnswer(): Long {
-    val most =  this.maxByOrNull { it.value }?.value ?: 0
+private fun Map<String, Long>.toAnswer(): Long {
+    val most = this.maxByOrNull { it.value }?.value ?: 0
     val least = this.minByOrNull { it.value }?.value ?: 0
     return most - least
 }
