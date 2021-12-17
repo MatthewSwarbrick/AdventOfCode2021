@@ -14,8 +14,12 @@ private fun solvePart1() {
 }
 
 private fun solvePart2() {
-    val input = "target area: x=20..30, y=-10..-5"
-    val answer = 0
+    val answer = puzzle
+        .toTargetArea()
+        .toVelocities()
+        .toHits()
+        .count()
+
     println("Solution to part2: $answer")
 }
 
