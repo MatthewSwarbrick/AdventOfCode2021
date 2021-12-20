@@ -146,7 +146,7 @@ private fun String.toRightSnailPair(): SnailPair {
 
 private fun SnailPair.reduce(): SnailPair {
     //temp for tests
-    var totalReductions = 0
+   // var totalReductions = 0
 
     var reduced = this
     println()
@@ -154,29 +154,35 @@ private fun SnailPair.reduce(): SnailPair {
     println(reduced)
     println()
     do {
-        totalReductions++
-        val exploded = reduced.explode()
-
-        println()
-        println("AFTER EXPLODE")
-        println(exploded)
-        println()
-
+        //totalReductions++
+        var valueToExplode = reduced
+        var exploded = valueToExplode.explode()
+        while(exploded != valueToExplode) {
+            println("Exploding...")
+            valueToExplode = exploded
+            exploded = valueToExplode.explode()
+            println()
+            println("AFTER EXPLODE")
+            println(exploded)
+            println()
+        }
         val split = exploded.split()
-
         println()
         println("AFTER SPLIT")
         println(split)
         println()
-
         if (reduced != split) {
             reduced = split
         } else {
+            println()
+            println("AFTER REDUCE")
+            println(reduced)
+            println()
             return reduced
         }
-    } while (totalReductions < 100)
+    } while (true)//totalReductions < 100)
 
-    return reduced
+   // return reduced
 }
 
 private fun List<SnailPair>.updatePairsAfterExplode(): List<SnailPair> {
@@ -259,7 +265,7 @@ private fun SnailPair.updateMostRightNumber(amountToIncreaseBy: Int): SnailPair 
     if (this.rightNumber != null) {
         this.copy(rightNumber = this.rightNumber + amountToIncreaseBy)
     } else if(this.rightPair != null){
-        this.rightPair.updateMostRightNumber(amountToIncreaseBy)
+        this.copy(rightPair = this.rightPair.updateMostRightNumber(amountToIncreaseBy))
     } else {
         this
     }
@@ -268,7 +274,7 @@ private fun SnailPair.updateMostLeftNumber(amountToIncreaseBy: Int): SnailPair =
     if (this.leftNumber != null) {
         this.copy(leftNumber = this.leftNumber + amountToIncreaseBy)
     } else if(this.leftPair != null){
-        this.leftPair.updateMostLeftNumber(amountToIncreaseBy)
+        this.copy(leftPair = this.leftPair.updateMostLeftNumber(amountToIncreaseBy))
     } else {
         this
     }
