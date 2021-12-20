@@ -13,6 +13,13 @@ private fun solvePart1() {
 //        "[1,1]"
 
         //larger example - this isn't working - explode removes the very first pair which then corrupts the output
+        // it did the following
+        //AFTER SPLIT
+        //[[[[4,0],[5,0]],[[[4,5],[2,6]],[9,5]]],[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]]
+        //
+        //AFTER EXPLODE
+        //[[[5,4],[[0,[7,6]],[9,5]]],[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]]
+        //THIS NEEDS DEBUGGING
         "[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]",
         "[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]",
 //        "[[2,[[0,8],[3,4]]],[[[6,7],1],[7,[1,6]]]]",
@@ -42,8 +49,7 @@ private fun solvePart1() {
 //        .toMagnitudes()
 
     answer.map {
-        it.print()
-        println()
+        println(it)
         println("---------------------")
     }
     println("Solution to part1: $answer")
@@ -55,9 +61,7 @@ private fun solvePart2() {
     println("Solution to part2: $answer")
 }
 
-private fun List<String>.toSnailPairs() = this.map { it.toSnailPair() }
-
-private fun String.toSnailPair(side: Side? = null): SnailPair {
+fun String.toSnailPair(side: Side? = null): SnailPair {
     val snailPair = this.substring(1, this.lastIndex)
     var leftSnailPair: SnailPair? = null
     var leftNumber: Int? = null
@@ -77,6 +81,21 @@ private fun String.toSnailPair(side: Side? = null): SnailPair {
 
     return SnailPair(side, leftSnailPair, leftNumber, rightSnailPair, rightNumber)
 }
+
+fun SnailPair.explode(): SnailPair {
+    val pathToLeftMostNestedPair = this.toLeftMostPairPath(4)
+    return if (pathToLeftMostNestedPair.isEmpty()) {
+        this
+    } else {
+        val pairToExplode = pathToLeftMostNestedPair.last()
+        pathToLeftMostNestedPair
+            .take(pathToLeftMostNestedPair.lastIndex)
+            .updatePairsAfterExplode(pairToExplode, pathToLeftMostNestedPair.lastIndex - 1)
+            .replaceExplodedPairs()
+    }
+}
+
+private fun List<String>.toSnailPairs() = this.map { it.toSnailPair() }
 
 private fun String.toLeftSnailPair(): SnailPair {
     val closingBracketIndex = this.foldIndexed(0) { index, acc, c ->
@@ -135,21 +154,21 @@ private fun SnailPair.reduce(): SnailPair {
     var reduced = this
     println()
     println("START")
-    reduced.print()
+    println(reduced)
     println()
     do {
         val exploded = reduced.explode()
 
         println()
         println("AFTER EXPLODE")
-        exploded.print()
+        println(exploded)
         println()
 
         val split = exploded.split()
 
         println()
         println("AFTER SPLIT")
-        split.print()
+        println(split)
         println()
 
         if (reduced != split) {
@@ -158,19 +177,6 @@ private fun SnailPair.reduce(): SnailPair {
             return reduced
         }
     } while (true)
-}
-
-private fun SnailPair.explode(): SnailPair {
-    val pathToLeftMostNestedPair = this.toLeftMostPairPath(4)
-    return if (pathToLeftMostNestedPair.isEmpty()) {
-        this
-    } else {
-        val pairToExplode = pathToLeftMostNestedPair.last()
-        pathToLeftMostNestedPair
-            .take(pathToLeftMostNestedPair.lastIndex)
-            .updatePairsAfterExplode(pairToExplode, pathToLeftMostNestedPair.lastIndex - 1)
-            .replaceExplodedPairs()
-    }
 }
 
 private fun List<SnailPair>.updatePairsAfterExplode(explodedPair: SnailPair, index: Int): List<SnailPair> {
@@ -351,21 +357,23 @@ data class SnailPair(
     val leftNumber: Int? = null,
     val rightPair: SnailPair? = null,
     val rightNumber: Int? = null
-)
+) {
+    override fun toString(): String {
+        var value = "["
+        if (this.leftNumber != null) {
+            value += "$value${this.leftNumber},"
+        } else {
+            value += this.leftPair?.toString() ?: ""
+            value += ","
+        }
+        if (this.rightNumber != null) {
+            value += "${this.rightNumber}]"
+        } else {
+            value += this.rightPair?.toString() ?: ""
+            value += "]"
+        }
 
-private fun SnailPair.print() {
-    print("[")
-    if (this.leftNumber != null) {
-        print("${this.leftNumber},")
-    } else {
-        this.leftPair?.print()
-        print(",")
-    }
-    if (this.rightNumber != null) {
-        print("${this.rightNumber}]")
-    } else {
-        this.rightPair?.print()
-        print("]")
+        return value
     }
 }
 

@@ -15,6 +15,7 @@ repositories {
 dependencies {
     implementation("io.arrow-kt:arrow-core:[0.13, 0.14)")
     implementation("org.junit.jupiter:junit-jupiter:[5.7, 5.8)")
+    implementation("org.junit.jupiter:junit-jupiter-params:[5.7, 5.8)")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.5.10")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-common:1.5.10")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.10")
