@@ -8,10 +8,6 @@ fun main() {
 
 private fun solvePart1() {
     val input = listOf(
-        //happy path explode example - this example currently works perfectly
-//        "[[[[4,3],4],4],[7,[[8,4],9]]]",
-//        "[1,1]"
-
         //larger example - this isn't working - explode removes the very first pair which then corrupts the output
         // it did the following
         //AFTER SPLIT
@@ -61,6 +57,8 @@ private fun solvePart2() {
     println("Solution to part2: $answer")
 }
 
+fun List<String>.toSnailPairs() = this.map { it.toSnailPair() }
+
 fun String.toSnailPair(side: Side? = null): SnailPair {
     val snailPair = this.substring(1, this.lastIndex)
     var leftSnailPair: SnailPair? = null
@@ -82,20 +80,31 @@ fun String.toSnailPair(side: Side? = null): SnailPair {
     return SnailPair(side, leftSnailPair, leftNumber, rightSnailPair, rightNumber)
 }
 
+fun List<SnailPair>.toSum(): List<SnailPair> =
+    this.fold<SnailPair, List<SnailPair>>(listOf()) { acc, snailPair ->
+        if (acc.isEmpty()) {
+            acc.plus(snailPair)
+        } else {
+            acc.plus(
+                SnailPair(
+                    leftPair = acc.last().copy(side = Side.LEFT),
+                    rightPair = snailPair.copy(side = Side.RIGHT)
+                ).reduce()
+            )
+        }
+    }
+        .drop(1)
+
 fun SnailPair.explode(): SnailPair {
     val pathToLeftMostNestedPair = this.toLeftMostPairPath(4)
     return if (pathToLeftMostNestedPair.isEmpty()) {
         this
     } else {
-        val pairToExplode = pathToLeftMostNestedPair.last()
         pathToLeftMostNestedPair
-            .take(pathToLeftMostNestedPair.lastIndex)
-            .updatePairsAfterExplode(pairToExplode, pathToLeftMostNestedPair.lastIndex - 1)
+            .updatePairsAfterExplode()
             .replaceExplodedPairs()
     }
 }
-
-private fun List<String>.toSnailPairs() = this.map { it.toSnailPair() }
 
 private fun String.toLeftSnailPair(): SnailPair {
     val closingBracketIndex = this.foldIndexed(0) { index, acc, c ->
@@ -135,28 +144,17 @@ private fun String.toRightSnailPair(): SnailPair {
     return this.substring(this.length - (startingBracketIndex + 1), this.length).toSnailPair(Side.RIGHT)
 }
 
-private fun List<SnailPair>.toSum(): List<SnailPair> =
-    this.fold<SnailPair, List<SnailPair>>(listOf()) { acc, snailPair ->
-        if (acc.isEmpty()) {
-            acc.plus(snailPair)
-        } else {
-            acc.plus(
-                SnailPair(
-                    leftPair = acc.last().copy(side = Side.LEFT),
-                    rightPair = snailPair.copy(side = Side.RIGHT)
-                ).reduce()
-            )
-        }
-    }
-        .drop(1)
-
 private fun SnailPair.reduce(): SnailPair {
+    //temp for tests
+    var totalReductions = 0
+
     var reduced = this
     println()
     println("START")
     println(reduced)
     println()
     do {
+        totalReductions++
         val exploded = reduced.explode()
 
         println()
@@ -176,26 +174,27 @@ private fun SnailPair.reduce(): SnailPair {
         } else {
             return reduced
         }
-    } while (true)
+    } while (totalReductions < 100)
+
+    return reduced
 }
 
-private fun List<SnailPair>.updatePairsAfterExplode(explodedPair: SnailPair, index: Int): List<SnailPair> {
-    var pairPath = this.toMutableList()
+private fun List<SnailPair>.updatePairsAfterExplode(): List<SnailPair> {
+    val explodingPair = this.last()
 
-    if (index < 0) {
-        return pairPath
-    }
+    var pairPath = this.take(this.lastIndex).toMutableList()
 
-    pairPath = pairPath.updateFirstLeftNumber(explodedPair).toMutableList()
-    pairPath = pairPath.updateFirstRightNumber(explodedPair).toMutableList()
 
-    val pairToExplodeInto = pairPath[index]
-    if (explodedPair.side == Side.LEFT) {
+    pairPath = pairPath.updateFirstLeftNumber(explodingPair).toMutableList()
+    pairPath = pairPath.updateFirstRightNumber(explodingPair).toMutableList()
+
+    val pairToExplodeInto = pairPath[pairPath.lastIndex]
+    if (explodingPair.side == Side.LEFT) {
         val updatedPair = pairToExplodeInto.copy(leftNumber = 0, leftPair = null)
-        pairPath[index] = updatedPair
+        pairPath[pairPath.lastIndex] = updatedPair
     } else {
         val updatedPair = pairToExplodeInto.copy(rightNumber = 0, rightPair = null)
-        pairPath[index] = updatedPair
+        pairPath[pairPath.lastIndex] = updatedPair
     }
 
     return pairPath
@@ -361,7 +360,7 @@ data class SnailPair(
     override fun toString(): String {
         var value = "["
         if (this.leftNumber != null) {
-            value += "$value${this.leftNumber},"
+            value += "${this.leftNumber},"
         } else {
             value += this.leftPair?.toString() ?: ""
             value += ","

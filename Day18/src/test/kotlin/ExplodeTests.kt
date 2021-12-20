@@ -15,7 +15,7 @@ class ExplodeTests {
         delimiter = '|'
     )
     fun `I can explode a snail pair`(input: String, expected: String) {
-        val actual = input
+       val actual = input
             .toSnailPair()
             .explode()
 
