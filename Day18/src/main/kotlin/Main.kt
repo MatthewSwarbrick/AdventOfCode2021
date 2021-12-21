@@ -106,6 +106,31 @@ fun SnailPair.explode(): SnailPair {
     }
 }
 
+fun SnailPair.split(): SnailPair {
+    val pathToLeftMostNestedPair = this.toLeftMostPairPath()
+    return if (pathToLeftMostNestedPair.isEmpty()) {
+        this
+    } else {
+        val pairToSplit = pathToLeftMostNestedPair.last()
+        if (pairToSplit.leftNumber != null && pairToSplit.leftNumber >= 10) {
+            val newLeftNumber = floor(pairToSplit.leftNumber / 2.0).toInt()
+            val newRightNumber = ceil(pairToSplit.leftNumber / 2.0).toInt()
+            val newPair = SnailPair(Side.LEFT, leftNumber = newLeftNumber, rightNumber = newRightNumber)
+            pathToLeftMostNestedPair.replaceSplitPair(pairToSplit.copy(leftNumber = null, leftPair = newPair))
+        } else {
+            val newLeftNumber = floor((pairToSplit.rightNumber ?: 0) / 2.0).toInt()
+            val newRightNumber = ceil((pairToSplit.rightNumber ?: 0) / 2.0).toInt()
+            val newPair = SnailPair(Side.RIGHT, leftNumber = newLeftNumber, rightNumber = newRightNumber)
+            pathToLeftMostNestedPair.replaceSplitPair(pairToSplit.copy(rightNumber = null, rightPair = newPair))
+        }
+    }
+}
+
+private fun SnailPair.shouldExplodeFirst(): Boolean {
+    val explodePath = this.toLeftMostPairPath(4)
+    return explodePath.isNotEmpty()
+}
+
 private fun String.toLeftSnailPair(): SnailPair {
     val closingBracketIndex = this.foldIndexed(0) { index, acc, c ->
         var newAcc = acc
@@ -145,34 +170,30 @@ private fun String.toRightSnailPair(): SnailPair {
 }
 
 private fun SnailPair.reduce(): SnailPair {
-    //temp for tests
-   // var totalReductions = 0
-
     var reduced = this
     println()
     println("START")
     println(reduced)
     println()
     do {
-        //totalReductions++
-        var valueToExplode = reduced
-        var exploded = valueToExplode.explode()
-        while(exploded != valueToExplode) {
+        var valueToReduce = reduced
+        if(valueToReduce.shouldExplodeFirst()) {
             println("Exploding...")
-            valueToExplode = exploded
-            exploded = valueToExplode.explode()
+            valueToReduce = valueToReduce.explode()
             println()
             println("AFTER EXPLODE")
-            println(exploded)
+            println(valueToReduce)
+            println()
+        } else {
+            valueToReduce = valueToReduce.split()
+            println()
+            println("AFTER SPLIT")
+            println(valueToReduce)
             println()
         }
-        val split = exploded.split()
-        println()
-        println("AFTER SPLIT")
-        println(split)
-        println()
-        if (reduced != split) {
-            reduced = split
+
+        if (reduced != valueToReduce) {
+            reduced = valueToReduce
         } else {
             println()
             println("AFTER REDUCE")
@@ -180,9 +201,7 @@ private fun SnailPair.reduce(): SnailPair {
             println()
             return reduced
         }
-    } while (true)//totalReductions < 100)
-
-   // return reduced
+    } while (true)
 }
 
 private fun List<SnailPair>.updatePairsAfterExplode(): List<SnailPair> {
@@ -279,26 +298,6 @@ private fun SnailPair.updateMostLeftNumber(amountToIncreaseBy: Int): SnailPair =
         this
     }
 
-private fun SnailPair.split(): SnailPair {
-    val pathToLeftMostNestedPair = this.toLeftMostPairPath()
-    return if (pathToLeftMostNestedPair.isEmpty()) {
-        this
-    } else {
-        val pairToSplit = pathToLeftMostNestedPair.last()
-        if (pairToSplit.leftNumber != null && pairToSplit.leftNumber >= 10) {
-            val newLeftNumber = floor(pairToSplit.leftNumber / 2.0).toInt()
-            val newRightNumber = ceil(pairToSplit.leftNumber / 2.0).toInt()
-            val newPair = SnailPair(Side.LEFT, leftNumber = newLeftNumber, rightNumber = newRightNumber)
-            pathToLeftMostNestedPair.replaceSplitPair(pairToSplit.copy(leftNumber = null, leftPair = newPair))
-        } else {
-            val newLeftNumber = floor((pairToSplit.rightNumber ?: 0) / 2.0).toInt()
-            val newRightNumber = ceil((pairToSplit.rightNumber ?: 0) / 2.0).toInt()
-            val newPair = SnailPair(Side.RIGHT, leftNumber = newLeftNumber, rightNumber = newRightNumber)
-            pathToLeftMostNestedPair.replaceSplitPair(pairToSplit.copy(rightNumber = null, rightPair = newPair))
-        }
-    }
-}
-
 private fun List<SnailPair>.replaceExplodedPairs(): SnailPair =
     this.reversed().drop(1).fold(this.last()) { acc, snailPair ->
         when (acc.side) {
@@ -331,12 +330,12 @@ private fun SnailPair.toLeftMostPairPath(requiredDepth: Int): List<SnailPair> =
     }
 
 private fun SnailPair.toLeftMostPairPath(): List<SnailPair> =
-    if ((this.leftNumber != null && this.leftNumber >= 10) || (this.rightNumber != null && this.rightNumber >= 10)) {
+    if (this.leftPair != null && this.leftPair.containsSplit()) {
+        listOf(this).plus(this.leftPair.toLeftMostPairPath())
+    } else if ((this.leftNumber != null && this.leftNumber >= 10) || (this.rightNumber != null && this.rightNumber >= 10)) {
         listOf(this)
     } else {
-        if (this.leftPair != null && this.leftPair.containsSplit()) {
-            listOf(this).plus(this.leftPair.toLeftMostPairPath())
-        } else if (this.rightPair != null && this.rightPair.containsSplit()) {
+        if (this.rightPair != null && this.rightPair.containsSplit()) {
             listOf(this).plus(this.rightPair.toLeftMostPairPath())
         } else {
             listOf()
