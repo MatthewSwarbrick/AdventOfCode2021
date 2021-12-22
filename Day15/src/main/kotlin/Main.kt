@@ -1,5 +1,5 @@
 fun main() {
-    solvePart1()
+//    solvePart1()
     solvePart2()
 }
 
@@ -29,7 +29,11 @@ private fun solvePart2() {
         "2311944581"
     )
 
-    val answer = 0
+    val answer = puzzle
+        .toFullGrid()
+        .toPoints()
+        .toPaths()
+        .toLowestRisk()
     println("Solution to part2: $answer")
 }
 
@@ -38,6 +42,30 @@ private fun List<Point>.toPaths(): List<List<Point>> {
     val startingPath = listOf(startingPoint)
     val risks = mutableMapOf<Point, Int>()
     return startingPath.toPaths(this, risks)
+}
+
+private fun List<String>.toFullGrid(): List<String> {
+    var feedList = this
+    val newVertical = this.plus((1..4).map {
+        feedList = feedList.map { row ->
+            row.map { c ->
+                val newDigit = c.digitToInt() + 1
+                if(newDigit > 9) { 1 } else newDigit
+            }.joinToString("")
+        }
+        feedList
+    }.flatten())
+
+    return newVertical.map { row ->
+        var feedRow = row
+        "$row${(1..4).map {
+            feedRow = feedRow.map { c ->
+                val newDigit = c.digitToInt() + 1
+                if(newDigit > 9) { 1 } else newDigit
+            }.joinToString("")
+            feedRow
+        }.joinToString("")}"
+    }
 }
 
 private fun List<Point>.toPaths(allPoints: List<Point>, risks: MutableMap<Point, Int>): List<List<Point>> =
